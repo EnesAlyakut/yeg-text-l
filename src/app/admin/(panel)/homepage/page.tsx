@@ -143,6 +143,12 @@ export default async function AdminHomepage() {
     story: (
       <>
         <Bilingual label="Metin" name="story.text" en={s.story?.textEn} tr={s.story?.textTr} fr={s.story?.textFr} textarea rows={4} />
+        <ImageField
+          label="Arka plan görseli"
+          name="story.texture"
+          value={s.story?.texture}
+          hint="Bölümün arkasında soluk ve yazı tarafı koyulaştırılmış şekilde gösterilir. Yatay, en az 2000px önerilir."
+        />
         {[0, 1, 2].map((i) => (
           <div key={i} className="space-y-3 rounded-lg border border-line p-4">
             <p className="text-xs font-semibold text-ash">Adım {i + 1}</p>

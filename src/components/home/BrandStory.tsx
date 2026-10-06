@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef } from "react";
 import { gsap, useGSAP, MOTION_OK } from "@/lib/gsap";
 import type { ImageRef } from "@/lib/content-types";
@@ -9,9 +10,9 @@ type Props = { index: string; eyebrow: string; lines: string[]; text: string; te
 
 /**
  * FROM IDEA → TO FABRIC → TO PRODUCT: the title steps down like a process, the steps sit on a
- * line that fills red as you scroll. Clean dark-to-red backdrop, no photo texture.
+ * line that fills red as you scroll. Dark-to-red backdrop over a faded atelier photo.
  */
-export function BrandStory({ eyebrow, lines, text, steps }: Props) {
+export function BrandStory({ eyebrow, lines, text, texture, steps }: Props) {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -48,11 +49,26 @@ export function BrandStory({ eyebrow, lines, text, steps }: Props) {
       {/* Backdrop: black at the top deepening into red at the foot, one slow light */}
       <div aria-hidden className="absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#050505_0%,#0b0202_35%,#2a0000_100%)]" />
-        <div data-orb className="absolute -bottom-[30vmax] -right-[15vmax] size-[75vmax] rounded-full bg-brand/20 blur-[150px] will-change-transform" />
-        {/* Pixel-dissolved YEG monogram on the right, fading into the text side */}
-        <div
-          className="absolute inset-y-0 right-0 w-full bg-[url('/media/campaign/story-pixels-3.png')] bg-[length:auto_136%] bg-[position:right_-4%_center] bg-no-repeat opacity-30 [image-rendering:pixelated] [mask-image:linear-gradient(90deg,transparent_10%,#000_45%)] md:w-[80%]"
-        />
+        {/* Atelier photo (Admin → Ana Sayfa → Marka hikâyesi), darkened on the text side and at the edges */}
+        {texture && (
+          <>
+            <Image
+              src={texture.url}
+              alt=""
+              fill
+              sizes="100vw"
+              quality={95}
+              placeholder={texture.blur ? "blur" : "empty"}
+              blurDataURL={texture.blur ?? undefined}
+              className="object-cover opacity-40"
+              style={{ objectPosition: texture.position }}
+            />
+            {/* Light shade only where the text sits, plus soft top/bottom edges */}
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.6)_0%,rgba(0,0,0,0.3)_35%,transparent_60%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.5)_0%,transparent_15%,transparent_85%,rgba(0,0,0,0.6)_100%)]" />
+          </>
+        )}
+        <div data-orb className={`absolute -bottom-[30vmax] -right-[15vmax] size-[75vmax] rounded-full blur-[150px] will-change-transform ${texture ? "bg-brand/0" : "bg-brand/15"}`} />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent" />
       </div>
 
