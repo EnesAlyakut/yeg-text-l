@@ -1,0 +1,261 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  nameEn    String
+  nameTr    String
+  nameFr    String?
+  sortOrder Int       @default(0)
+  products  Product[]
+  createdAt DateTime  @default(now())
+
+  @@index([sortOrder])
+}
+
+model Collection {
+  id               String    @id @default(cuid())
+  slug             String    @unique
+  nameEn           String
+  nameTr           String
+  nameFr           String?
+  seasonEn         String?
+  seasonTr         String?
+  seasonFr         String?
+  taglineEn        String?
+  taglineTr        String?
+  taglineFr        String?
+  descriptionEn    String?
+  descriptionTr    String?
+  descriptionFr    String?
+  coverUrl         String?
+  coverWidth       Int?
+  coverHeight      Int?
+  coverBlur        String?
+  coverPosition    String    @default("50% 50%")
+  /// Extra images: { url, width, height, blurDataUrl, altEn, altTr, altFr, objectPosition }[]
+  gallery          Json      @default("[]")
+  isFeatured       Boolean   @default(false)
+  published        Boolean   @default(true)
+  sortOrder        Int       @default(0)
+  seoTitleEn       String?
+  seoTitleTr       String?
+  seoDescriptionEn String?
+  seoDescriptionTr String?
+  seoTitleFr       String?
+  seoDescriptionFr String?
+  products         Product[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model Product {
+  id               String         @id @default(cuid())
+  slug             String         @unique
+  code             String?        @unique
+  nameEn           String
+  nameTr           String
+  nameFr           String?
+  shortEn          String?
+  shortTr          String?
+  shortFr          String?
+  descriptionEn    String?
+  descriptionTr    String?
+  descriptionFr    String?
+  materialEn       String?
+  materialTr       String?
+  materialFr       String?
+  colorEn          String?
+  colorTr          String?
+  colorFr          String?
+  /// string[]
+  featuresEn       Json           @default("[]")
+  /// string[]
+  featuresTr       Json           @default("[]")
+  /// string[]
+  featuresFr       Json           @default("[]")
+  /// { labelEn, labelTr, labelFr, valueEn, valueTr, valueFr }[]
+  specs            Json           @default("[]")
+  price            Decimal        @db.Decimal(10, 2)
+  categoryId       String?
+  category         Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  collectionId     String?
+  collection       Collection?    @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  images           ProductImage[]
+  isFeatured       Boolean        @default(false)
+  isShowcase       Boolean        @default(false)
+  published        Boolean        @default(true)
+  sortOrder        Int            @default(0)
+  seoTitleEn       String?
+  seoTitleTr       String?
+  seoDescriptionEn String?
+  seoDescriptionTr String?
+  seoTitleFr       String?
+  seoDescriptionFr String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([collectionId])
+  @@index([categoryId])
+  @@index([published, sortOrder])
+  @@index([published, isFeatured])
+  @@index([published, isShowcase])
+}
+
+model ProductImage {
+  id             String  @id @default(cuid())
+  productId      String
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url            String
+  width          Int
+  height         Int
+  blurDataUrl    String?
+  altEn          String?
+  altTr          String?
+  altFr          String?
+  /// CSS object-position used whenever the image is cropped
+  objectPosition String  @default("50% 30%")
+  isPrimary      Boolean @default(false)
+  sortOrder      Int     @default(0)
+
+  @@index([productId, sortOrder])
+}
+
+model BlogCategory {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  nameEn    String
+  nameTr    String
+  nameFr    String?
+  sortOrder Int      @default(0)
+  posts     Blog[]
+  createdAt DateTime @default(now())
+
+  @@index([sortOrder])
+}
+
+model Blog {
+  id               String        @id @default(cuid())
+  slug             String        @unique
+  titleEn          String
+  titleTr          String
+  titleFr          String?
+  excerptEn        String?
+  excerptTr        String?
+  excerptFr        String?
+  /// Lightweight markdown: paragraphs, ## headings, > quotes, - lists
+  contentEn        String
+  contentTr        String
+  contentFr        String?
+  coverUrl         String?
+  coverWidth       Int?
+  coverHeight      Int?
+  coverBlur        String?
+  coverPosition    String        @default("50% 50%")
+  /// Extra images shown after the article body (same shape as Collection.gallery)
+  gallery          Json          @default("[]")
+  categoryId       String?
+  category         BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  author           String        @default("YEG Textile")
+  published        Boolean       @default(true)
+  isFeatured       Boolean       @default(false)
+  publishedAt      DateTime      @default(now())
+  seoTitleEn       String?
+  seoTitleTr       String?
+  seoDescriptionEn String?
+  seoDescriptionTr String?
+  seoTitleFr       String?
+  seoDescriptionFr String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([published, publishedAt])
+  @@index([categoryId])
+  @@index([published, isFeatured])
+}
+
+/// One row per homepage block (hero, intro, featured, showcase, story, collections, banner, marquee).
+/// Editable content of the static pages (about, production, fabrics…). Holds only what was
+/// changed in the admin; the defaults live in src/content and fill in anything missing.
+model PageContent {
+  key       String   @id
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+model HomepageSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  enabled   Boolean  @default(true)
+  sortOrder Int      @default(0)
+  data      Json
+  updatedAt DateTime @updatedAt
+
+  @@index([enabled, sortOrder])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Every image/video the site serves, stored in the database itself.
+/// `url` is the public path (/media/... for the brand package, /uploads/... for admin uploads).
+model MediaAsset {
+  id          String   @id @default(cuid())
+  url         String   @unique
+  filename    String
+  mimeType    String   @default("image/jpeg")
+  /// "brand" = imported brand package, "upload" = added through the admin
+  source      String   @default("upload")
+  width       Int      @default(0)
+  height      Int      @default(0)
+  size        Int
+  blurDataUrl String?
+  data        Bytes?
+  createdAt   DateTime @default(now())
+
+  @@index([source, createdAt])
+  @@index([source, url])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  message   String
+  locale    String   @default("en")
+  subject   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+  @@index([createdAt])
+}

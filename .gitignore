@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# brand package originals (large) & runtime uploads
+/brand-source
+/storage
+
+
+# database backups
+/backups
+
+# local tools
+/.tools
+.claude/
