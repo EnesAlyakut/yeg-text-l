@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # brand package originals (large) & runtime uploads
-/brand-source
+# /brand-source
 /storage
 
 
