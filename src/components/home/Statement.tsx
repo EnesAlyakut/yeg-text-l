@@ -31,7 +31,7 @@ function Frame({ image, images = [], caption, shade }: { image: ImageRef; images
   return (
     <div data-frame className="absolute inset-0 overflow-hidden will-change-transform">
       {slides.length > 1 ? (
-        <SlideLayers slides={slides} index={show.index} quality={95} kenBurns={false} fallbackAlt={caption} />
+        <SlideLayers slides={slides} index={show.index} quality={88} kenBurns={false} fallbackAlt={caption} />
       ) : (
         <Image
           src={image.url}
@@ -39,7 +39,7 @@ function Frame({ image, images = [], caption, shade }: { image: ImageRef; images
           width={image.width}
           height={image.height}
           sizes={coverSizes(image.width, image.height)}
-          quality={95}
+          quality={88}
           placeholder={image.blur ? "blur" : "empty"}
           blurDataURL={image.blur ?? undefined}
           className="h-full w-full object-cover will-change-transform"

@@ -86,14 +86,15 @@ export function Showcase({ items, labels }: { items: ShowcaseItem[]; labels: Lab
           ))}
         </div>
 
-        <div className="relative flex h-full flex-col justify-between px-[5vw] pb-12 pt-[calc(var(--nav-h)+3rem)]">
+        <div className="relative flex h-full flex-col px-[5vw] pb-10 pt-[calc(var(--nav-h)+2rem)]">
           <p className="eyebrow flex items-center gap-3 text-ash">
             {labels.eyebrow}
           </p>
 
-          <div className="relative flex-1">
+          {/* Panels share one grid cell so the area sizes to the tallest and stays centred */}
+          <div className="relative grid min-h-0 flex-1 items-center py-6">
             {items.map((item, i) => (
-              <article key={item.slug} data-sc-panel className="absolute inset-x-0 top-1/2 -translate-y-1/2">
+              <article key={item.slug} data-sc-panel className="col-start-1 row-start-1">
                 <p className="eyebrow text-ash">
                   {String(i + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
                 </p>

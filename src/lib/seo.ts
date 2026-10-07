@@ -16,31 +16,66 @@ type BuildMeta = {
   noIndex?: boolean;
 };
 
-export const absoluteUrl = (path: string) => (path.startsWith("http") ? path : `${SITE_URL}${path}`);
+export const absoluteUrl = (path: string) => (path.startsWith("http") ? path : `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`);
 
 export function buildMetadata({ lang, path, title, description, image, type = "website", publishedTime, noIndex }: BuildMeta): Metadata {
-  const url = localePath(lang, path);
+  const relUrl = localePath(lang, path);
+  const canonicalUrl = absoluteUrl(relUrl);
   const og = image ?? { url: "/media/campaign/neon-room.jpg", width: 2752, height: 1536, alt: "YEG Textile" };
+  const ogImageUrl = absoluteUrl(og.url);
+
   return {
+    metadataBase: new URL(SITE_URL),
     title,
     description,
     alternates: {
-      canonical: url,
-      languages: { en: localePath("en", path), tr: localePath("tr", path), fr: localePath("fr", path), "x-default": localePath("en", path) },
+      canonical: canonicalUrl,
+      languages: {
+        en: absoluteUrl(localePath("en", path)),
+        tr: absoluteUrl(localePath("tr", path)),
+        fr: absoluteUrl(localePath("fr", path)),
+        "x-default": absoluteUrl(localePath("en", path)),
+      },
     },
     openGraph: {
       type,
-      url,
+      url: canonicalUrl,
       title,
       description,
       siteName: "YEG Textile",
       locale: OG_LOCALE[lang],
       alternateLocale: locales.filter((l) => l !== lang).map((l) => OG_LOCALE[l]),
-      images: [{ url: og.url, width: og.width, height: og.height, alt: og.alt ?? title }],
+      images: [
+        {
+          url: ogImageUrl,
+          width: og.width,
+          height: og.height,
+          alt: og.alt ?? title,
+        },
+      ],
       ...(publishedTime ? { publishedTime } : {}),
     },
-    twitter: { card: "summary_large_image", title, description, images: [og.url] },
-    robots: noIndex ? { index: false, follow: false } : undefined,
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImageUrl],
+      creator: "@yegtextile",
+      site: "@yegtextile",
+    },
+    robots: noIndex
+      ? { index: false, follow: false }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            "max-video-preview": -1,
+            "max-image-preview": "large",
+            "max-snippet": -1,
+          },
+        },
   };
 }
 
@@ -50,16 +85,53 @@ export function JsonLd({ data }: { data: Record<string, unknown> | Record<string
   };
 }
 
-export function organizationSchema(contact: { email: string; phone: string; instagram: string }) {
+export function organizationSchema(contact: { email: string; phone: string; instagram: string; addressEn?: string; addressTr?: string }) {
   return {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "Brand"],
     name: "YEG Textile",
+    legalName: "YEG Textile",
     url: SITE_URL,
     logo: absoluteUrl("/media/brand/logo-badge-red.svg"),
+    image: absoluteUrl("/media/campaign/neon-room.jpg"),
+    description: "Istanbul-based contemporary menswear atelier & luxury garment manufacturer.",
     email: contact.email,
     telephone: contact.phone,
-    sameAs: [`https://instagram.com/${contact.instagram}`],
+    sameAs: [
+      contact.instagram ? `https://instagram.com/${contact.instagram}` : "https://instagram.com/yegtextile",
+    ],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        telephone: contact.phone,
+        contactType: "customer service",
+        availableLanguage: ["Turkish", "English", "French"],
+      },
+    ],
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "TR",
+      addressLocality: "Istanbul",
+      streetAddress: contact.addressTr || contact.addressEn || "Istanbul, Türkiye",
+    },
+  };
+}
+
+export function websiteSchema(lang: Locale) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "YEG Textile",
+    url: SITE_URL,
+    inLanguage: [OG_LOCALE[lang], "en_US", "tr_TR", "fr_FR"],
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/${lang}/products?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
   };
 }
 
@@ -67,6 +139,11 @@ export function breadcrumbSchema(items: { name: string; url: string }[]) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: items.map((item, i) => ({ "@type": "ListItem", position: i + 1, name: item.name, item: absoluteUrl(item.url) })),
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: absoluteUrl(item.url),
+    })),
   };
 }

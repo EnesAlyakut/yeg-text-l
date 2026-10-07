@@ -30,8 +30,8 @@ export function Hero({ image, images = [], mobileImage, videoUrl, titleLines, su
     () => {
       const mm = gsap.matchMedia();
       mm.add(MOTION_OK, () => {
-        // Wait for the intro loader on a first visit.
-        const delay = document.documentElement.classList.contains("no-loader") ? 0.15 : 1.45;
+        // Start animation immediately or right after snappy intro.
+        const delay = document.documentElement.classList.contains("no-loader") ? 0.05 : 0.5;
         const tl = gsap.timeline({ delay });
         tl.from("[data-hero-media]", { scale: 1.22, duration: 2.6, ease: "expo.out" }, 0)
           .from("[data-hero-line] > span", { yPercent: 112, duration: 1.5, ease: "expo.out", stagger: 0.1 }, 0.1)
@@ -58,7 +58,7 @@ export function Hero({ image, images = [], mobileImage, videoUrl, titleLines, su
     { scope: root },
   );
 
-  const common = { alt: titleLines.join(" "), quality: 95, loading: "eager" as const, fetchPriority: "high" as const };
+  const common = { alt: titleLines.join(" "), quality: 90, loading: "eager" as const, fetchPriority: "high" as const };
   const desktop = getImageProps({ ...common, sizes: coverSizes(image.width, image.height), src: image.url, width: image.width, height: image.height });
   const mobile = mobileImage
     ? getImageProps({ ...common, sizes: "100vw", src: mobileImage.url, width: mobileImage.width, height: mobileImage.height })
@@ -68,7 +68,7 @@ export function Hero({ image, images = [], mobileImage, videoUrl, titleLines, su
     <section ref={root} className="relative h-[100svh] min-h-[560px] overflow-hidden bg-ink" aria-label={titleLines.join(" ")}>
       <div data-hero-media className="absolute inset-0 will-change-transform">
         {slides.length > 1 ? (
-          <SlideLayers slides={slides} index={show.index} quality={95} preload fallbackAlt={common.alt} />
+          <SlideLayers slides={slides} index={show.index} quality={90} preload fallbackAlt={common.alt} />
         ) : videoUrl ? (
           <video
             className="h-full w-full object-cover"

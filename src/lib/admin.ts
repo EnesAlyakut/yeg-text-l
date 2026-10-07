@@ -1,8 +1,10 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
+import { invalidateQueryCache } from "./queries";
 
 /** Every admin mutation affects the public site in both languages. */
 export function revalidateSite() {
+  invalidateQueryCache();
   revalidatePath("/[lang]", "layout");
   revalidatePath("/sitemap.xml");
 }

@@ -72,7 +72,7 @@ export function CardImageStack({ photos, alt, preload, zoomClass, stepMs = 1300 
             fill
             sizes={p.sizes}
             preload={preload && i === 0}
-            quality={85}
+            quality={80}
             placeholder={p.blurDataUrl ? "blur" : "empty"}
             blurDataURL={p.blurDataUrl ?? undefined}
             className={cn("object-cover transition-[opacity,transform] duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)]", i === index ? "opacity-100" : "opacity-0", zoomClass)}

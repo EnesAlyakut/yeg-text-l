@@ -196,13 +196,13 @@ body {
   display: grid;
   place-items: center;
   background: var(--color-ink);
-  animation: loader-out 0.9s var(--ease-in-out-quart) 1.35s forwards;
+  animation: loader-out 0.4s var(--ease-in-out-quart) 0.45s forwards;
   pointer-events: none;
 }
 .loader__logo {
   width: clamp(88px, 12vw, 140px);
   clip-path: inset(100% 0 0 0);
-  animation: loader-logo 0.9s var(--ease-out-expo) 0.1s forwards;
+  animation: loader-logo 0.35s var(--ease-out-expo) 0.05s forwards;
 }
 .loader__bar {
   position: absolute;
@@ -221,10 +221,10 @@ body {
   background: var(--color-brand);
   transform-origin: left;
   transform: scaleX(0);
-  animation: loader-bar 1.2s var(--ease-in-out-quart) forwards;
+  animation: loader-bar 0.4s var(--ease-in-out-quart) forwards;
 }
 html.no-loader .loader {
-  display: none;
+  display: none !important;
 }
 @keyframes loader-logo {
   to {

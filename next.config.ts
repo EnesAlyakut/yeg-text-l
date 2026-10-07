@@ -2,16 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    formats: ["image/avif", "image/webp"],
-    // Anything requested below 85 (incl. the default 75) is coerced up to 85; large photos use 95.
-    qualities: [85, 90, 95],
-    // 3200 lets full-bleed campaign photos (2752–3200px sources) stay sharp on 1440px retina screens.
-    deviceSizes: [480, 640, 828, 1080, 1280, 1600, 1920, 2560, 3200],
+    formats: ["image/webp"],
+    qualities: [75, 80, 85, 88, 90, 95],
+    deviceSizes: [480, 640, 828, 1080, 1280, 1600, 1920, 2560],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     localPatterns: [{ pathname: "/media/**" }, { pathname: "/uploads/**" }],
   },
+  compress: true,
   experimental: {
-    optimizePackageImports: ["gsap", "framer-motion"],
+    optimizePackageImports: ["gsap", "framer-motion", "clsx", "lenis"],
     serverActions: { bodySizeLimit: "4mb" },
   },
   poweredByHeader: false,

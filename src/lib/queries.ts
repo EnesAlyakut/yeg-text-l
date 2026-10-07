@@ -76,13 +76,32 @@ export function toCard(p: ProductWithRelations): ProductCardData {
   };
 }
 
+const queryCache = new Map<string, { data: unknown; expiresAt: number }>();
+const DEFAULT_TTL_MS = 60 * 1000; // 60s TTL for public read queries
+
+export function invalidateQueryCache() {
+  queryCache.clear();
+}
+
+async function cachedFetch<T>(key: string, fn: () => Promise<T>, ttlMs = DEFAULT_TTL_MS): Promise<T> {
+  const now = Date.now();
+  const hit = queryCache.get(key);
+  if (hit && hit.expiresAt > now) {
+    return hit.data as T;
+  }
+  const data = await fn();
+  queryCache.set(key, { data, expiresAt: now + ttlMs });
+  return data;
+}
+
 export const getProducts = cache(async () => {
-  const products = await db.product.findMany({
-    where: { published: true },
-    include: productInclude,
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+  return cachedFetch("products", async () => {
+    return db.product.findMany({
+      where: { published: true },
+      include: productInclude,
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    });
   });
-  return products;
 });
 
 export const getProductBySlug = cache(async (slug: string) => {
@@ -95,15 +114,19 @@ export const getProductsBySlugs = cache(async (slugs: string[]) => {
   return slugs.map((s) => products.find((p) => p.slug === s)).filter((p): p is ProductWithRelations => Boolean(p));
 });
 
-export const getCategories = cache(async () => db.category.findMany({ orderBy: { sortOrder: "asc" } }));
+export const getCategories = cache(async () => {
+  return cachedFetch("categories", async () => db.category.findMany({ orderBy: { sortOrder: "asc" } }));
+});
 
-export const getCollections = cache(async () =>
-  db.collection.findMany({
-    where: { published: true },
-    orderBy: { sortOrder: "asc" },
-    include: { _count: { select: { products: { where: { published: true } } } } },
-  }),
-);
+export const getCollections = cache(async () => {
+  return cachedFetch("collections", async () =>
+    db.collection.findMany({
+      where: { published: true },
+      orderBy: { sortOrder: "asc" },
+      include: { _count: { select: { products: { where: { published: true } } } } },
+    }),
+  );
+});
 
 export const getCollectionBySlug = cache(async (slug: string) =>
   db.collection.findFirst({
@@ -128,15 +151,17 @@ export const getPostBySlug = cache(async (slug: string) =>
 );
 
 export const getHomepage = cache(async () => {
-  const rows = await db.homepageSection.findMany({ orderBy: { sortOrder: "asc" } });
-  const sections = {} as Partial<HomepageSections>;
-  const order: { key: keyof HomepageSections; enabled: boolean }[] = [];
-  for (const row of rows) {
-    const key = row.key as keyof HomepageSections;
-    (sections as Record<string, unknown>)[key] = row.data;
-    order.push({ key, enabled: row.enabled });
-  }
-  return { sections, order };
+  return cachedFetch("homepage", async () => {
+    const rows = await db.homepageSection.findMany({ orderBy: { sortOrder: "asc" } });
+    const sections = {} as Partial<HomepageSections>;
+    const order: { key: keyof HomepageSections; enabled: boolean }[] = [];
+    for (const row of rows) {
+      const key = row.key as keyof HomepageSections;
+      (sections as Record<string, unknown>)[key] = row.data;
+      order.push({ key, enabled: row.enabled });
+    }
+    return { sections, order };
+  });
 });
 
 const DEFAULT_CONTACT: ContactSettings = {
@@ -150,12 +175,14 @@ const DEFAULT_CONTACT: ContactSettings = {
 };
 
 export const getSettings = cache(async () => {
-  const rows = await db.setting.findMany();
-  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-  return {
-    contact: { ...DEFAULT_CONTACT, ...(map.contact as Partial<ContactSettings> | undefined) } as ContactSettings,
-    general: { currency: "USD", showPrices: true, ...(map.general as Partial<GeneralSettings> | undefined) } as GeneralSettings,
-  };
+  return cachedFetch("settings", async () => {
+    const rows = await db.setting.findMany();
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    return {
+      contact: { ...DEFAULT_CONTACT, ...(map.contact as Partial<ContactSettings> | undefined) } as ContactSettings,
+      general: { currency: "USD", showPrices: true, ...(map.general as Partial<GeneralSettings> | undefined) } as GeneralSettings,
+    };
+  });
 });
 
 /** Slugs to prerender at build time; an unreachable DB just means on-demand rendering. */
